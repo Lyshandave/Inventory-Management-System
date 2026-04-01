@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shoes Inventory System – System Flowchart v11</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1B3A6B;--blue:#2563EB;--lblue:#DBEAFE;--llblue:#EFF6FF;
+  --green:#16A34A;--lgreen:#DCFCE7;--llgreen:#F0FDF4;
+  --purple:#7C3AED;--lpurple:#EDE9FE;
+  --orange:#EA580C;--lorange:#FFF7ED;
+  --red:#DC2626;--lred:#FEE2E2;
+  --gold:#B45309;--lgold:#FFFBEB;
+  --gray:#6B7280;--lgray:#F9FAFB;--dgray:#374151;
+  --ink:#111827;
+  --shadow:0 2px 12px rgba(27,58,107,.10);
+  --shadow-lg:0 8px 32px rgba(27,58,107,.16);
+}
+body{font-family:'Inter',sans-serif;background:#F0F4FF;min-height:100vh;padding:32px 24px;}
+.page-header{text-align:center;margin-bottom:28px;}
+.page-header .school{font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;}
+.page-header h1{font-family:'Syne',sans-serif;font-size:22px;color:var(--navy);font-weight:800;margin-bottom:4px;}
+.page-header .sub{font-size:13px;color:var(--gray)}
+.legend{display:flex;flex-wrap:wrap;gap:12px 20px;justify-content:center;background:white;border:1.5px solid #E0E7FF;border-radius:12px;padding:14px 24px;margin-bottom:28px;box-shadow:var(--shadow);max-width:1400px;margin-left:auto;margin-right:auto;}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--dgray)}
+.leg-terminal{width:54px;height:20px;background:var(--navy);border-radius:10px}
+.leg-process{width:54px;height:20px;background:white;border:2px solid var(--ink);border-radius:3px}
+.leg-admin{width:54px;height:20px;background:var(--lblue);border:2px solid var(--blue);border-radius:3px}
+.leg-cashier{width:54px;height:20px;background:var(--lgreen);border:2px solid var(--green);border-radius:3px}
+.leg-system{width:54px;height:20px;background:var(--lorange);border:2px solid var(--orange);border-radius:3px}
+.leg-sync{width:54px;height:20px;background:var(--lpurple);border:2px solid var(--purple);border-radius:3px}
+.leg-doc{width:54px;height:24px;background:var(--lgold);border:2px solid var(--gold);clip-path:polygon(0 0,100% 0,100% 75%,50% 100%,0 75%)}
+.leg-diamond{width:20px;height:20px;background:white;border:2px solid var(--ink);transform:rotate(45deg);flex-shrink:0;}
+.leg-error{width:54px;height:20px;background:var(--lred);border:2px solid var(--red);border-radius:3px}
+.canvas{background:white;border-radius:16px;box-shadow:var(--shadow-lg);border:1.5px solid #E0E7FF;overflow:auto;margin:0 auto;padding:32px;}
+svg text{font-family:'Inter',sans-serif}
+@media print{
+  body{background:white;padding:0}
+  .canvas{box-shadow:none;border:none;padding:16px}
+  .legend,.page-header .school{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="page-header">
+  <div class="school">Asian Institute of Computer Studies - BS Computer Science</div>
+  <h1>Shoes Inventory Management System</h1>
+  <div class="sub">System Flowchart v11 — Tightened Products Management, verified arrows from source code</div>
+</div>
+<div class="legend">
+  <div class="legend-item"><div class="leg-terminal"></div>Terminal (Start / End)</div>
+  <div class="legend-item"><div class="leg-process"></div>Process / Action</div>
+  <div class="legend-item"><div class="leg-diamond"></div>Decision</div>
+  <div class="legend-item"><div class="leg-admin"></div>Admin Process</div>
+  <div class="legend-item"><div class="leg-cashier"></div>Cashier Process</div>
+  <div class="legend-item"><div class="leg-system"></div>Backend POST/AJAX</div>
+  <div class="legend-item"><div class="leg-sync"></div>Real-Time Sync</div>
+  <div class="legend-item"><div class="leg-doc"></div>Document / Report</div>
+  <div class="legend-item"><div class="leg-error"></div>Error / Reject</div>
+</div>
+<div class="canvas">
+<!--
+  CANVAS: 3400 wide x 1400 tall
+  LOGIN center x=1500
+
+  ADMIN branch center x=600
+    Products Management (4 sub-cols — TIGHTENED):
+      Col A (Add Stock)      x=160
+      Col B (Sell Product)   x=330
+      Col C (Edit Product)   x=510  (was 660, moved LEFT closer)
+      Col D (Archive Product)x=660  (was 840, moved LEFT closer)
+    Col E (Sales History)    x=830
+    Col F (Cashier Report)   x=1020
+    Col G (Manage Users)     x=1210
+    Col H (Refund Processing)x=1420
+    Col L (Admin Logout)     x=1660 (closer to Refund but not overlapping)
+
+  CASHIER branch center x=2500
+    Col P (Sell Products)    x=2340
+    Col Q (Add Stock)        x=2500 (moved slightly RIGHT from 2520→2500 centered)
+    Col R (Shift Controls)   x=2880
+      sub: End Shift=2740, Lock=2880, Logout=3020
+
+  ARROWS verified against actual PHP source code:
+    - add_stock.php: updates products.quantity + inserts stock_logs → triggers sync (products.updated_at)
+    - sell_product.php: decrements stock + inserts transaction → triggers sync (products.updated_at + transactions)
+    - edit_product.php: updates products fields → triggers sync (products.updated_at)
+    - archive_product.php: sets is_archived flag → triggers sync (products updated implicitly)
+    - process_refund.php: updates transaction status + optionally restocks → triggers sync
+    - sync_check.php detects changes via MAX(products.updated_at) and MAX(transactions.updated_at)
+    
+    So ALL 5 modules (Add Stock, Sell, Edit, Archive, Refund) correctly have sync arrows.
+-->
+<svg id="fc" width="3600" height="1400" viewBox="0 0 3600 1400">
+<defs>
+  <marker id="ah"   markerWidth="9" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#334155"/></marker>
+  <marker id="ah-b" markerWidth="9" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#2563EB"/></marker>
+  <marker id="ah-g" markerWidth="9" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#16A34A"/></marker>
+  <marker id="ah-p" markerWidth="9" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#7C3AED"/></marker>
+  <marker id="ah-r" markerWidth="9" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#DC2626"/></marker>
+  <filter id="ds" x="-10%" y="-10%" width="120%" height="130%">
+    <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#1B3A6B" flood-opacity=".12"/>
+  </filter>
+  <filter id="dss" x="-8%" y="-8%" width="116%" height="128%">
+    <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#000" flood-opacity=".08"/>
+  </filter>
+</defs>
+
+<!-- ========================================
+     SHARED LOGIN FLOW   center x=1500
+     ======================================== -->
+<rect x="1400" y="24" width="200" height="36" rx="18" fill="#1B3A6B" filter="url(#ds)"/>
+<text x="1500" y="38" fill="white" font-size="10" font-weight="700" text-anchor="middle">START</text>
+<text x="1500" y="51" fill="#93C5FD" font-size="9" text-anchor="middle">index.php — Login Page</text>
+<line x1="1500" y1="60" x2="1500" y2="82" stroke="#334155" stroke-width="1.8" marker-end="url(#ah)"/>
+
+<rect x="1400" y="82" width="200" height="36" rx="4" fill="white" stroke="#334155" stroke-width="1.8" filter="url(#dss)"/>
+<text x="1500" y="104" fill="#111827" font-size="10" text-anchor="middle">Enter Username &amp; Password</text>
+<line x1="1500" y1="118" x2="1500" y2="142" stroke="#334155" stroke-width="1.8" marker-end="url(#ah)"/>
+
+<!-- Decision: Credentials Valid? -->
+<polygon points="1500,142 1590,178 1500,214 1410,178" fill="white" stroke="#334155" stroke-width="2" filter="url(#dss)"/>
+<text x="1500" y="174" fill="#111827" font-size="10" text-anchor="middle" font-weight="600">Credentials</text>
+<text x="1500" y="187" fill="#111827" font-size="10" text-anchor="middle" font-weight="600">Valid?</text>
+
+<!-- NO -> Show Error -->
+<line x1="1410" y1="178" x2="1298" y2="178" stroke="#DC2626" stroke-width="1.8" marker-end="url(#ah-r)"/>
+<text x="1352" y="170" fill="#DC2626" font-size="9" font-weight="600" text-anchor="middle">No</text>
+<rect x="1220" y="162" width="80" height="32" rx="4" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.8"/>
+<text x="1260" y="182" fill="#DC2626" font-size="10" font-weight="600" text-anchor="middle">Show Error</text>
+<path d="M1220,178 Q1170,178 1170,130 Q1170,82 1400,82" stroke="#DC2626" stroke-width="1.5" fill="none" stroke-dasharray="5 3" marker-end="url(#ah-r)"/>
+
+<!-- YES -> Account Active? -->
+<line x1="1590" y1="178" x2="1660" y2="178" stroke="#334155" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="1627" y="170" fill="#334155" font-size="9" font-weight="600" text-anchor="middle">Yes</text>
+<polygon points="1720,148 1800,178 1720,208 1640,178" fill="white" stroke="#334155" stroke-width="2" filter="url(#dss)"/>
+<text x="1720" y="174" fill="#111827" font-size="9.5" text-anchor="middle" font-weight="600">Account</text>
+<text x="1720" y="187" fill="#111827" font-size="9.5" text-anchor="middle" font-weight="600">Active?</text>
+
+<!-- NO -> Deactivated -->
+<line x1="1720" y1="148" x2="1720" y2="120" stroke="#DC2626" stroke-width="1.5" marker-end="url(#ah-r)"/>
+<text x="1732" y="137" fill="#DC2626" font-size="9" font-weight="600">No</text>
+<rect x="1650" y="90" width="140" height="30" rx="4" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.5"/>
+<text x="1720" y="109" fill="#DC2626" font-size="9" font-weight="600" text-anchor="middle">Account Deactivated</text>
+<line x1="1720" y1="90" x2="1720" y2="68" stroke="#DC2626" stroke-width="1.5" marker-end="url(#ah-r)"/>
+<rect x="1665" y="44" width="110" height="24" rx="12" fill="#DC2626"/>
+<text x="1720" y="60" fill="white" font-size="9" font-weight="700" text-anchor="middle">END (Denied)</text>
+
+<!-- YES Active -> Check Role -->
+<line x1="1800" y1="178" x2="1870" y2="178" stroke="#334155" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="1837" y="170" fill="#334155" font-size="9" font-weight="600" text-anchor="middle">Yes</text>
+<polygon points="1930,148 2010,178 1930,208 1850,178" fill="white" stroke="#334155" stroke-width="2" filter="url(#dss)"/>
+<text x="1930" y="174" fill="#111827" font-size="10" text-anchor="middle" font-weight="600">Check</text>
+<text x="1930" y="187" fill="#111827" font-size="10" text-anchor="middle" font-weight="600">Role</text>
+
+<!-- Admin arc to left -->
+<line x1="1930" y1="208" x2="1930" y2="240" stroke="#2563EB" stroke-width="1.8"/>
+<line x1="1930" y1="240" x2="600" y2="240" stroke="#2563EB" stroke-width="1.8"/>
+<line x1="600" y1="240" x2="600" y2="260" stroke="#2563EB" stroke-width="1.8" marker-end="url(#ah-b)"/>
+<rect x="1240" y="224" width="44" height="16" rx="8" fill="#2563EB"/>
+<text x="1262" y="236" fill="white" font-size="8.5" font-weight="700" text-anchor="middle">Admin</text>
+
+<!-- Cashier arc to right - clean right-angled lines -->
+<line x1="2010" y1="178" x2="2500" y2="178" stroke="#16A34A" stroke-width="1.8"/>
+<line x1="2500" y1="178" x2="2500" y2="260" stroke="#16A34A" stroke-width="1.8" marker-end="url(#ah-g)"/>
+<rect x="2220" y="162" width="54" height="16" rx="8" fill="#16A34A"/>
+<text x="2247" y="174" fill="white" font-size="8.5" font-weight="700" text-anchor="middle">Cashier</text>
+
+
+<!-- ========================================
+     ADMIN BRANCH   center x=600
+     Products Mgmt: A=160 B=330 C=510 D=660
+     E=830 F=1020 G=1210 H=1420 L=1660
+     ======================================== -->
+<rect x="500" y="260" width="200" height="34" rx="17" fill="#2563EB" filter="url(#ds)"/>
+<text x="600" y="281" fill="white" font-size="10" font-weight="700" text-anchor="middle">Admin Login Success</text>
+<line x1="600" y1="294" x2="600" y2="318" stroke="#2563EB" stroke-width="1.8" marker-end="url(#ah-b)"/>
+
+<!-- ADMIN DASHBOARD box -->
+<rect x="60" y="318" width="1880" height="44" rx="5" fill="#EFF6FF" stroke="#2563EB" stroke-width="2" filter="url(#dss)"/>
+<text x="1000" y="335" fill="#1B3A6B" font-size="11" font-weight="700" text-anchor="middle">ADMIN DASHBOARD</text>
+<text x="1000" y="351" fill="#2563EB" font-size="9" text-anchor="middle">admin.php — All Admin Features</text>
+
+<!-- Horizontal spread -->
+<line x1="1000" y1="362" x2="1000" y2="386" stroke="#2563EB" stroke-width="1.8"/>
+<line x1="160" y1="386" x2="1860" y2="386" stroke="#2563EB" stroke-width="1.5"/>
+<!-- Drop lines for each column -->
+<line x1="160"  y1="386" x2="160"  y2="406" stroke="#2563EB" stroke-width="1.5" marker-end="url(#ah-b)"/>
+<line x1="330"  y1="386" x2="330"  y2="406" stroke="#2563EB" stroke-width="1.5" marker-end="url(#ah-b)"/>
+<line x1="570"  y1="386" x2="570"  y2="406" stroke="#2563EB" stroke-width="1.5" marker-end="url(#ah-b)"/>
+<line x1="740"  y1="386" x2="740"  y2="406" stroke="#2563EB" stroke-width="1.5" marker-end="url(#ah-b)"/>
+<line x1="940"  y1="386" x2="940"  y2="406" stroke="#2563EB" stroke-width="1.5" marker-end="url(#ah-b)"/>
+<line x1="1140" y1="386" x2="1140" y2="406" stroke="#2563EB" stroke-width="1.5" marker-end="url(#ah-b)"/>
+<line x1="1340" y1="386" x2="1340" y2="406" stroke="#2563EB" stroke-width="1.5" marker-end="url(#ah-b)"/>
+<line x1="1570" y1="386" x2="1570" y2="406" stroke="#2563EB" stroke-width="1.5" marker-end="url(#ah-b)"/>
+<line x1="1860" y1="386" x2="1860" y2="406" stroke="#2563EB" stroke-width="1.5" stroke-dasharray="6 3" marker-end="url(#ah-b)"/>
+
+<!-- == Section Headers == -->
+<!-- Products Management: spans A+B+C+D (x=60 to x=740) -->
+<rect x="60" y="406" width="760" height="36" rx="4" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="440" y="420" fill="#1B3A6B" font-size="9.5" font-weight="600" text-anchor="middle">Products Management</text>
+<text x="440" y="432" fill="#1B3A6B" font-size="8" text-anchor="middle">add_product.php / edit_product.php / archive / add_stock.php / sell_product.php</text>
+
+<!-- Sales History -->
+<rect x="860" y="406" width="160" height="36" rx="4" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="940" y="420" fill="#1B3A6B" font-size="9.5" font-weight="600" text-anchor="middle">Sales History</text>
+<text x="940" y="432" fill="#1B3A6B" font-size="8.5" text-anchor="middle">sales_history.php</text>
+
+<!-- Cashier Report -->
+<rect x="1060" y="406" width="160" height="36" rx="4" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="1140" y="420" fill="#1B3A6B" font-size="9.5" font-weight="600" text-anchor="middle">Cashier Report</text>
+<text x="1140" y="432" fill="#1B3A6B" font-size="8.5" text-anchor="middle">cashier_report.php</text>
+
+<!-- Manage Users -->
+<rect x="1260" y="406" width="160" height="36" rx="4" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="1340" y="420" fill="#1B3A6B" font-size="9.5" font-weight="600" text-anchor="middle">Manage Users</text>
+<text x="1340" y="432" fill="#1B3A6B" font-size="8.5" text-anchor="middle">manage_users.php</text>
+
+<!-- Refund Processing -->
+<rect x="1470" y="406" width="200" height="36" rx="4" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="1570" y="420" fill="#1B3A6B" font-size="9.5" font-weight="600" text-anchor="middle">Refund Processing</text>
+<text x="1570" y="432" fill="#1B3A6B" font-size="8.5" text-anchor="middle">process_refund.php</text>
+
+<!-- Admin Logout -->
+<rect x="1780" y="406" width="160" height="36" rx="4" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="1860" y="420" fill="#1B3A6B" font-size="9.5" font-weight="600" text-anchor="middle">Admin Logout</text>
+<text x="1860" y="432" fill="#2563EB" font-size="8.5" text-anchor="middle">navbar button</text>
+
+
+<!-- == COL A (x=160): ADD STOCK sub-flow == -->
+<line x1="160" y1="442" x2="160" y2="466" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="100" y="466" width="120" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="160" y="479" fill="#111827" font-size="8.5" text-anchor="middle">Add Stock</text>
+<text x="160" y="490" fill="#111827" font-size="8.5" text-anchor="middle">Modal</text>
+<line x1="160" y1="498" x2="160" y2="518" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="100" y="518" width="120" height="32" rx="3" fill="#FFF7ED" stroke="#EA580C" stroke-width="1.5"/>
+<text x="160" y="531" fill="#EA580C" font-size="8.5" font-weight="600" text-anchor="middle">POST</text>
+<text x="160" y="542" fill="#EA580C" font-size="8" text-anchor="middle">add_stock.php</text>
+<line x1="160" y1="550" x2="160" y2="568" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<polygon points="160,568 212,594 160,620 108,594" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="160" y="590" fill="#111827" font-size="7.5" text-anchor="middle" font-weight="600">Max Limit</text>
+<text x="160" y="602" fill="#111827" font-size="7.5" text-anchor="middle" font-weight="600">OK?</text>
+<!-- No -> Error -->
+<line x1="108" y1="594" x2="60" y2="594" stroke="#DC2626" stroke-width="1.3" marker-end="url(#ah-r)"/>
+<text x="83" y="586" fill="#DC2626" font-size="7.5" text-anchor="middle">No</text>
+<rect x="0" y="580" width="62" height="28" rx="4" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.3"/>
+<text x="31" y="598" fill="#DC2626" font-size="7.5" font-weight="600" text-anchor="middle">Error Toast</text>
+<!-- Yes -> Begin DB Transaction -->
+<line x1="160" y1="620" x2="160" y2="640" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="172" y="632" fill="#334155" font-size="8" text-anchor="start">Yes</text>
+<rect x="100" y="640" width="120" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="160" y="653" fill="#111827" font-size="8.5" text-anchor="middle">Begin DB</text>
+<text x="160" y="664" fill="#111827" font-size="8.5" text-anchor="middle">Transaction</text>
+<line x1="160" y1="672" x2="160" y2="692" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="100" y="692" width="120" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="160" y="712" fill="#111827" font-size="8.5" text-anchor="middle">Update Stock</text>
+<line x1="160" y1="724" x2="160" y2="744" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="100" y="744" width="120" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="160" y="757" fill="#111827" font-size="8.5" text-anchor="middle">Insert</text>
+<text x="160" y="768" fill="#111827" font-size="8.5" text-anchor="middle">stock_logs</text>
+<line x1="160" y1="776" x2="160" y2="796" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="100" y="796" width="120" height="28" rx="14" fill="#1B3A6B"/>
+<text x="160" y="814" fill="white" font-size="9" font-weight="700" text-anchor="middle">Commit ✓</text>
+
+
+<!-- == COL B (x=330): SELL PRODUCT sub-flow == -->
+<line x1="330" y1="442" x2="330" y2="466" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="270" y="466" width="120" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="330" y="479" fill="#111827" font-size="8.5" text-anchor="middle">Sell Product</text>
+<text x="330" y="490" fill="#111827" font-size="8.5" text-anchor="middle">Modal</text>
+<line x1="330" y1="498" x2="330" y2="518" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="270" y="518" width="120" height="32" rx="3" fill="#FFF7ED" stroke="#EA580C" stroke-width="1.5"/>
+<text x="330" y="531" fill="#EA580C" font-size="8.5" font-weight="600" text-anchor="middle">POST</text>
+<text x="330" y="542" fill="#EA580C" font-size="8" text-anchor="middle">sell_product.php</text>
+<line x1="330" y1="550" x2="330" y2="568" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<polygon points="330,568 382,594 330,620 278,594" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="330" y="590" fill="#111827" font-size="7.5" text-anchor="middle" font-weight="600">Stock</text>
+<text x="330" y="602" fill="#111827" font-size="7.5" text-anchor="middle" font-weight="600">Available?</text>
+<!-- No -> Out of Stock -->
+<line x1="382" y1="594" x2="430" y2="594" stroke="#DC2626" stroke-width="1.3" marker-end="url(#ah-r)"/>
+<text x="408" y="586" fill="#DC2626" font-size="7.5" text-anchor="middle">No</text>
+<rect x="428" y="580" width="74" height="28" rx="4" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.3"/>
+<text x="465" y="598" fill="#DC2626" font-size="7.5" font-weight="600" text-anchor="middle">Out of Stock</text>
+<!-- Yes -->
+<line x1="330" y1="620" x2="330" y2="640" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="342" y="632" fill="#334155" font-size="8" text-anchor="start">Yes</text>
+<rect x="270" y="640" width="120" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="330" y="653" fill="#111827" font-size="8.5" text-anchor="middle">Begin DB</text>
+<text x="330" y="664" fill="#111827" font-size="8.5" text-anchor="middle">Transaction</text>
+<line x1="330" y1="672" x2="330" y2="692" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="270" y="692" width="120" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="330" y="705" fill="#111827" font-size="8.5" text-anchor="middle">Decrement</text>
+<text x="330" y="716" fill="#111827" font-size="8.5" text-anchor="middle">Stock</text>
+<line x1="330" y1="724" x2="330" y2="744" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="270" y="744" width="120" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="330" y="757" fill="#111827" font-size="8.5" text-anchor="middle">Insert</text>
+<text x="330" y="768" fill="#111827" font-size="8.5" text-anchor="middle">transaction</text>
+<line x1="330" y1="776" x2="330" y2="796" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="270" y="796" width="120" height="28" rx="14" fill="#1B3A6B"/>
+<text x="330" y="814" fill="white" font-size="9" font-weight="700" text-anchor="middle">Commit ✓</text>
+
+
+<!-- == COL C (x=510): EDIT PRODUCT sub-flow == -->
+<line x1="570" y1="442" x2="570" y2="466" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="510" y="466" width="120" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="570" y="479" fill="#111827" font-size="8.5" text-anchor="middle">Edit Product</text>
+<text x="570" y="490" fill="#111827" font-size="8.5" text-anchor="middle">Modal</text>
+<line x1="570" y1="498" x2="570" y2="518" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="510" y="518" width="120" height="32" rx="3" fill="#FFF7ED" stroke="#EA580C" stroke-width="1.5"/>
+<text x="570" y="531" fill="#EA580C" font-size="8.5" font-weight="600" text-anchor="middle">POST</text>
+<text x="570" y="542" fill="#EA580C" font-size="8" text-anchor="middle">edit_product.php</text>
+<line x1="570" y1="550" x2="570" y2="570" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="510" y="570" width="120" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="570" y="583" fill="#111827" font-size="8.5" text-anchor="middle">Validate &amp;</text>
+<text x="570" y="594" fill="#111827" font-size="8.5" text-anchor="middle">Update DB</text>
+<line x1="570" y1="602" x2="570" y2="622" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="510" y="622" width="120" height="28" rx="14" fill="#1B3A6B"/>
+<text x="570" y="640" fill="white" font-size="9" font-weight="700" text-anchor="middle">Commit ✓</text>
+
+
+<!-- == COL D (x=660): ARCHIVE PRODUCT sub-flow == -->
+<line x1="740" y1="442" x2="740" y2="466" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="680" y="466" width="120" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="740" y="479" fill="#111827" font-size="8.5" text-anchor="middle">Archive</text>
+<text x="740" y="490" fill="#111827" font-size="8.5" text-anchor="middle">Product</text>
+<line x1="740" y1="498" x2="740" y2="518" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="680" y="518" width="120" height="32" rx="3" fill="#FFF7ED" stroke="#EA580C" stroke-width="1.5"/>
+<text x="740" y="531" fill="#EA580C" font-size="8.5" font-weight="600" text-anchor="middle">POST</text>
+<text x="740" y="542" fill="#EA580C" font-size="8" text-anchor="middle">archive_product.php</text>
+<line x1="740" y1="550" x2="740" y2="570" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="680" y="570" width="120" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="740" y="583" fill="#111827" font-size="8.5" text-anchor="middle">Set archived</text>
+<text x="740" y="594" fill="#111827" font-size="8.5" text-anchor="middle">= 1 in DB</text>
+<line x1="740" y1="602" x2="740" y2="622" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="680" y="622" width="120" height="28" rx="14" fill="#1B3A6B"/>
+<text x="740" y="640" fill="white" font-size="9" font-weight="700" text-anchor="middle">Commit ✓</text>
+
+
+<!-- == COL E (x=830): SALES HISTORY == -->
+<line x1="940" y1="442" x2="940" y2="466" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="870" y="466" width="140" height="32" rx="3" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="940" y="479" fill="#1B3A6B" font-size="8.5" font-weight="600" text-anchor="middle">Date Range Filter</text>
+<text x="940" y="490" fill="#2563EB" font-size="7.5" text-anchor="middle">Today / Week / Month / Custom</text>
+<line x1="940" y1="498" x2="940" y2="518" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="870" y="518" width="140" height="32" rx="3" fill="#FFF7ED" stroke="#EA580C" stroke-width="1.5"/>
+<text x="940" y="531" fill="#EA580C" font-size="8.5" font-weight="600" text-anchor="middle">AJAX GET</text>
+<text x="940" y="542" fill="#EA580C" font-size="8" text-anchor="middle">fetch_sales_data()</text>
+<line x1="940" y1="550" x2="940" y2="568" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="870" y="568" width="140" height="32" rx="3" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="940" y="581" fill="#1B3A6B" font-size="8.5" text-anchor="middle">Display Summary</text>
+<text x="940" y="592" fill="#1B3A6B" font-size="8" text-anchor="middle">Stats + Transactions</text>
+<line x1="940" y1="600" x2="940" y2="632" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="870" y="632" width="140" height="40" rx="2" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
+<path d="M870,668 Q940,686 1010,668" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
+<text x="940" y="648" fill="#92400E" font-size="8.5" font-weight="600" text-anchor="middle">Sales History</text>
+<text x="940" y="660" fill="#92400E" font-size="8" text-anchor="middle">Report (Printable)</text>
+
+
+<!-- == COL F (x=1020): CASHIER REPORT == -->
+<line x1="1140" y1="442" x2="1140" y2="466" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="1070" y="466" width="140" height="32" rx="3" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="1140" y="479" fill="#1B3A6B" font-size="8.5" font-weight="600" text-anchor="middle">Filter by Date</text>
+<text x="1140" y="490" fill="#2563EB" font-size="7.5" text-anchor="middle">+ Cashier Dropdown</text>
+<line x1="1140" y1="498" x2="1140" y2="518" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="1070" y="518" width="140" height="32" rx="3" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="1140" y="531" fill="#1B3A6B" font-size="8.5" text-anchor="middle">Fetch Shifts +</text>
+<text x="1140" y="542" fill="#2563EB" font-size="8" text-anchor="middle">Daily Totals</text>
+<line x1="1140" y1="550" x2="1140" y2="568" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="1070" y="568" width="140" height="32" rx="3" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="1140" y="581" fill="#1B3A6B" font-size="8.5" text-anchor="middle">Per-shift Breakdown</text>
+<text x="1140" y="592" fill="#2563EB" font-size="8" text-anchor="middle">Sales + Stock Added</text>
+<line x1="1140" y1="600" x2="1140" y2="632" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="1070" y="632" width="140" height="40" rx="2" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
+<path d="M1070,668 Q1140,686 1210,668" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
+<text x="1140" y="648" fill="#92400E" font-size="8.5" font-weight="600" text-anchor="middle">Cashier Report</text>
+<text x="1140" y="660" fill="#92400E" font-size="8" text-anchor="middle">Per-shift (Printable)</text>
+
+
+<!-- == COL G (x=1210): MANAGE USERS == -->
+<line x1="1340" y1="442" x2="1340" y2="466" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="1270" y="466" width="140" height="32" rx="3" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="1340" y="479" fill="#1B3A6B" font-size="8.5" font-weight="600" text-anchor="middle">View Users List</text>
+<text x="1340" y="490" fill="#2563EB" font-size="7.5" text-anchor="middle">Admin &amp; Cashier accounts</text>
+<line x1="1340" y1="498" x2="1340" y2="518" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="1270" y="518" width="140" height="32" rx="3" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="1340" y="531" fill="#1B3A6B" font-size="8.5" text-anchor="middle">Create / Edit /</text>
+<text x="1340" y="542" fill="#2563EB" font-size="8" text-anchor="middle">Deactivate Accounts</text>
+<line x1="1340" y1="550" x2="1340" y2="568" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="1270" y="568" width="140" height="32" rx="3" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="1340" y="581" fill="#1B3A6B" font-size="8.5" text-anchor="middle">Update DB</text>
+<text x="1340" y="592" fill="#2563EB" font-size="8" text-anchor="middle">User Record</text>
+
+
+<!-- == COL H (x=1420): REFUND PROCESSING == -->
+<line x1="1570" y1="442" x2="1570" y2="480" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="1500" y="480" width="140" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="1570" y="493" fill="#111827" font-size="8.5" text-anchor="middle">Refund Modal</text>
+<text x="1570" y="504" fill="#6B7280" font-size="7.5" text-anchor="middle">(Sales History page)</text>
+<line x1="1570" y1="512" x2="1570" y2="530" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<polygon points="1570,530 1626,560 1570,590 1514,560" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="1570" y="556" fill="#111827" font-size="7.5" text-anchor="middle" font-weight="600">Within 30-day</text>
+<text x="1570" y="568" fill="#111827" font-size="7.5" text-anchor="middle" font-weight="600">Warranty?</text>
+<!-- No -> Refund Rejected -->
+<line x1="1626" y1="560" x2="1690" y2="560" stroke="#DC2626" stroke-width="1.3" marker-end="url(#ah-r)"/>
+<text x="1660" y="552" fill="#DC2626" font-size="8" text-anchor="middle">No</text>
+<rect x="1688" y="546" width="100" height="28" rx="4" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.3"/>
+<text x="1738" y="557" fill="#DC2626" font-size="7.5" font-weight="600" text-anchor="middle">Refund Rejected</text>
+<text x="1738" y="568" fill="#DC2626" font-size="7" text-anchor="middle">Past Warranty</text>
+<!-- Yes -> Resellable? -->
+<line x1="1570" y1="590" x2="1570" y2="614" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1582" y="604" fill="#334155" font-size="8" text-anchor="start">Yes</text>
+<polygon points="1570,614 1624,642 1570,670 1516,642" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="1570" y="638" fill="#111827" font-size="8" text-anchor="middle" font-weight="600">Resellable</text>
+<text x="1570" y="650" fill="#111827" font-size="8" text-anchor="middle" font-weight="600">Item?</text>
+<!-- Yes -> Restock -->
+<line x1="1624" y1="642" x2="1690" y2="642" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1660" y="634" fill="#334155" font-size="8" text-anchor="middle">Yes</text>
+<rect x="1688" y="628" width="100" height="28" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="1738" y="641" fill="#111827" font-size="8.5" text-anchor="middle">Restock</text>
+<text x="1738" y="652" fill="#111827" font-size="8.5" text-anchor="middle">Product</text>
+<!-- No -> Mark Damaged -->
+<line x1="1516" y1="642" x2="1460" y2="642" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1487" y="634" fill="#334155" font-size="8" text-anchor="middle">No</text>
+<rect x="1370" y="628" width="92" height="28" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="1416" y="641" fill="#111827" font-size="8.5" text-anchor="middle">Mark as</text>
+<text x="1416" y="652" fill="#6B7280" font-size="8.5" text-anchor="middle">Damaged</text>
+<!-- Both merge -> Insert Refund Record -->
+<path d="M1738,656 Q1738,700 1640,714" stroke="#334155" stroke-width="1.3" fill="none" marker-end="url(#ah)"/>
+<path d="M1416,656 Q1416,700 1500,714" stroke="#334155" stroke-width="1.3" fill="none" marker-end="url(#ah)"/>
+<rect x="1502" y="714" width="136" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="1570" y="727" fill="#111827" font-size="8.5" text-anchor="middle">Insert Refund</text>
+<text x="1570" y="738" fill="#111827" font-size="8.5" text-anchor="middle">Transaction Record</text>
+<line x1="1570" y1="746" x2="1570" y2="766" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="1522" y="766" width="96" height="28" rx="14" fill="#1B3A6B"/>
+<text x="1570" y="784" fill="white" font-size="9" font-weight="700" text-anchor="middle">Commit ✓</text>
+
+
+<!-- == COL L (x=1660): ADMIN LOGOUT == -->
+<line x1="1860" y1="442" x2="1860" y2="462" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="1792" y="462" width="136" height="32" rx="3" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="1860" y="475" fill="#1B3A6B" font-size="8.5" font-weight="600" text-anchor="middle">Destroy Session</text>
+<text x="1860" y="486" fill="#2563EB" font-size="7.5" text-anchor="middle">logout.php</text>
+<line x1="1860" y1="494" x2="1860" y2="514" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="1792" y="514" width="136" height="28" rx="4" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.5"/>
+<text x="1860" y="527" fill="#1B3A6B" font-size="8.5" text-anchor="middle">Redirect to</text>
+<text x="1860" y="538" fill="#2563EB" font-size="8" text-anchor="middle">index.php</text>
+<line x1="1860" y1="542" x2="1860" y2="562" stroke="#2563EB" stroke-width="1.3" marker-end="url(#ah-b)"/>
+<rect x="1792" y="562" width="136" height="26" rx="13" fill="#1B3A6B"/>
+<text x="1860" y="579" fill="white" font-size="9" font-weight="700" text-anchor="middle">END (Admin Session)</text>
+
+
+<!-- ========================================
+     CASHIER BRANCH   center x=2500
+     Col P (Sell)      x=2340
+     Col Q (Add Stock) x=2500
+     Col R (Shift Controls) center=2880
+       sub: End Shift=2740, Lock=2880, Logout=3020
+     ======================================== -->
+<rect x="2400" y="260" width="200" height="34" rx="17" fill="#16A34A" filter="url(#ds)"/>
+<text x="2500" y="281" fill="white" font-size="10" font-weight="700" text-anchor="middle">Cashier Login Success</text>
+<line x1="2500" y1="294" x2="2500" y2="318" stroke="#16A34A" stroke-width="1.8" marker-end="url(#ah-g)"/>
+
+<!-- Auto-Close Orphaned Shift -->
+<rect x="2408" y="318" width="184" height="38" rx="4" fill="#FFF7ED" stroke="#EA580C" stroke-width="1.8" filter="url(#dss)"/>
+<text x="2500" y="332" fill="#EA580C" font-size="9.5" font-weight="600" text-anchor="middle">Auto-Close Orphaned</text>
+<text x="2500" y="346" fill="#EA580C" font-size="8.5" text-anchor="middle">Shift (if exists)</text>
+<line x1="2500" y1="356" x2="2500" y2="380" stroke="#16A34A" stroke-width="1.8" marker-end="url(#ah-g)"/>
+
+<!-- Start New Shift -->
+<rect x="2408" y="380" width="184" height="38" rx="4" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.8" filter="url(#dss)"/>
+<text x="2500" y="394" fill="#166534" font-size="9.5" font-weight="600" text-anchor="middle">Start New Shift</text>
+<text x="2500" y="407" fill="#16A34A" font-size="8.5" text-anchor="middle">Auto on login</text>
+<line x1="2500" y1="418" x2="2500" y2="442" stroke="#16A34A" stroke-width="1.8" marker-end="url(#ah-g)"/>
+
+<!-- CASHIER DASHBOARD -->
+<rect x="2200" y="442" width="920" height="44" rx="5" fill="#F0FDF4" stroke="#16A34A" stroke-width="2" filter="url(#dss)"/>
+<text x="2660" y="459" fill="#14532D" font-size="11" font-weight="700" text-anchor="middle">CASHIER DASHBOARD</text>
+<text x="2660" y="475" fill="#16A34A" font-size="9" text-anchor="middle">admin.php (role-restricted)</text>
+
+<!-- 3 cashier menu columns -->
+<line x1="2500" y1="486" x2="2500" y2="506" stroke="#16A34A" stroke-width="1.8"/>
+<line x1="2280" y1="506" x2="2880" y2="506" stroke="#16A34A" stroke-width="1.5"/>
+<line x1="2280" y1="506" x2="2280" y2="526" stroke="#16A34A" stroke-width="1.5" marker-end="url(#ah-g)"/>
+<line x1="2440" y1="506" x2="2440" y2="526" stroke="#16A34A" stroke-width="1.5" marker-end="url(#ah-g)"/>
+<line x1="2880" y1="506" x2="2880" y2="526" stroke="#16A34A" stroke-width="1.5" marker-end="url(#ah-g)"/>
+
+<!-- P: Sell Products header -->
+<rect x="2210" y="526" width="140" height="36" rx="4" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.5"/>
+<text x="2280" y="540" fill="#166534" font-size="9.5" font-weight="600" text-anchor="middle">Sell Products</text>
+<text x="2280" y="552" fill="#16A34A" font-size="8.5" text-anchor="middle">(from dashboard)</text>
+
+<!-- Q: Add Stock header -->
+<rect x="2370" y="526" width="140" height="36" rx="4" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.5"/>
+<text x="2440" y="540" fill="#166534" font-size="9.5" font-weight="600" text-anchor="middle">Add Stock</text>
+<text x="2440" y="552" fill="#16A34A" font-size="8.5" text-anchor="middle">(max limit enforced)</text>
+
+<!-- R: Shift Controls header -->
+<rect x="2770" y="526" width="220" height="36" rx="4" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.5"/>
+<text x="2880" y="540" fill="#166534" font-size="9.5" font-weight="600" text-anchor="middle">Shift Controls</text>
+<text x="2880" y="552" fill="#16A34A" font-size="8.5" text-anchor="middle">(navbar buttons)</text>
+
+
+<!-- -- COL P (x=2340): Cashier SELL sub-flow -- -->
+<line x1="2280" y1="562" x2="2280" y2="582" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="2216" y="582" width="128" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="2280" y="595" fill="#111827" font-size="8.5" text-anchor="middle">Sell Modal</text>
+<text x="2280" y="606" fill="#6B7280" font-size="7.5" text-anchor="middle">(qty stepper)</text>
+<line x1="2280" y1="614" x2="2280" y2="634" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="2216" y="634" width="128" height="32" rx="3" fill="#FFF7ED" stroke="#EA580C" stroke-width="1.5"/>
+<text x="2280" y="647" fill="#EA580C" font-size="8.5" font-weight="600" text-anchor="middle">POST</text>
+<text x="2280" y="658" fill="#EA580C" font-size="8" text-anchor="middle">sell_product.php</text>
+<line x1="2280" y1="666" x2="2280" y2="686" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<polygon points="2280,686 2332,712 2280,738 2228,712" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="2280" y="708" fill="#111827" font-size="8" text-anchor="middle" font-weight="600">Stock</text>
+<text x="2280" y="720" fill="#111827" font-size="8" text-anchor="middle" font-weight="600">Available?</text>
+<!-- No -->
+<line x1="2228" y1="712" x2="2170" y2="712" stroke="#DC2626" stroke-width="1.3" marker-end="url(#ah-r)"/>
+<text x="2198" y="704" fill="#DC2626" font-size="7.5" text-anchor="middle">No</text>
+<rect x="2092" y="698" width="80" height="28" rx="4" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.3"/>
+<text x="2132" y="716" fill="#DC2626" font-size="7.5" font-weight="600" text-anchor="middle">Out of Stock</text>
+<!-- Yes -->
+<line x1="2280" y1="738" x2="2280" y2="758" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="2292" y="750" fill="#334155" font-size="8" text-anchor="start">Yes</text>
+<rect x="2216" y="758" width="128" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="2280" y="771" fill="#111827" font-size="8.5" text-anchor="middle">Begin DB Txn</text>
+<text x="2280" y="782" fill="#111827" font-size="8.5" text-anchor="middle">Decrement + Insert</text>
+<line x1="2280" y1="790" x2="2280" y2="810" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="2216" y="810" width="128" height="28" rx="14" fill="#1B3A6B"/>
+<text x="2280" y="828" fill="white" font-size="9" font-weight="700" text-anchor="middle">Commit ✓</text>
+
+
+<!-- -- COL Q (x=2500): Cashier ADD STOCK sub-flow -- -->
+<line x1="2440" y1="562" x2="2440" y2="582" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="2376" y="582" width="128" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="2440" y="599" fill="#111827" font-size="8.5" text-anchor="middle">Add Stock Modal</text>
+<line x1="2440" y1="614" x2="2440" y2="634" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="2376" y="634" width="128" height="32" rx="3" fill="#FFF7ED" stroke="#EA580C" stroke-width="1.5"/>
+<text x="2440" y="647" fill="#EA580C" font-size="8.5" font-weight="600" text-anchor="middle">POST</text>
+<text x="2440" y="658" fill="#EA580C" font-size="8" text-anchor="middle">add_stock.php</text>
+<line x1="2440" y1="666" x2="2440" y2="686" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<polygon points="2440,686 2492,712 2440,738 2388,712" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="2440" y="708" fill="#111827" font-size="8" text-anchor="middle" font-weight="600">Max Limit</text>
+<text x="2440" y="720" fill="#111827" font-size="8" text-anchor="middle" font-weight="600">OK?</text>
+<!-- No -> Error -->
+<line x1="2492" y1="712" x2="2540" y2="712" stroke="#DC2626" stroke-width="1.3" marker-end="url(#ah-r)"/>
+<text x="2518" y="704" fill="#DC2626" font-size="7.5" text-anchor="middle">No</text>
+<rect x="2538" y="698" width="80" height="28" rx="4" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.3"/>
+<text x="2578" y="716" fill="#DC2626" font-size="7.5" font-weight="600" text-anchor="middle">Error Toast</text>
+<!-- Yes -->
+<line x1="2440" y1="738" x2="2440" y2="758" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="2452" y="750" fill="#334155" font-size="8" text-anchor="start">Yes</text>
+<rect x="2376" y="758" width="128" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="2440" y="771" fill="#111827" font-size="8.5" text-anchor="middle">Update Stock</text>
+<text x="2440" y="782" fill="#111827" font-size="8.5" text-anchor="middle">+ Insert stock_log</text>
+<line x1="2440" y1="790" x2="2440" y2="810" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="2376" y="810" width="128" height="28" rx="14" fill="#1B3A6B"/>
+<text x="2440" y="828" fill="white" font-size="9" font-weight="700" text-anchor="middle">Commit ✓</text>
+
+
+<!-- -- COL R (x=2880): SHIFT CONTROLS sub-branches -- -->
+<line x1="2880" y1="562" x2="2880" y2="582" stroke="#16A34A" stroke-width="1.3" marker-end="url(#ah-g)"/>
+<line x1="2740" y1="582" x2="3020" y2="582" stroke="#16A34A" stroke-width="1.3"/>
+<line x1="2740" y1="582" x2="2740" y2="602" stroke="#16A34A" stroke-width="1.3" marker-end="url(#ah-g)"/>
+<line x1="2880" y1="582" x2="2880" y2="602" stroke="#16A34A" stroke-width="1.3" marker-end="url(#ah-g)"/>
+<line x1="3020" y1="582" x2="3020" y2="602" stroke="#16A34A" stroke-width="1.3" marker-end="url(#ah-g)"/>
+
+<!-- End Shift -->
+<rect x="2686" y="602" width="108" height="34" rx="3" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.5"/>
+<text x="2740" y="616" fill="#166534" font-size="9.5" font-weight="600" text-anchor="middle">End Shift</text>
+<text x="2740" y="628" fill="#16A34A" font-size="8" text-anchor="middle">end_shift.php</text>
+
+<!-- Lock Screen -->
+<rect x="2826" y="602" width="108" height="34" rx="3" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.5"/>
+<text x="2880" y="616" fill="#166534" font-size="9.5" font-weight="600" text-anchor="middle">Lock Screen</text>
+<text x="2880" y="628" fill="#16A34A" font-size="8" text-anchor="middle">lock.php</text>
+
+<!-- Logout -->
+<rect x="2966" y="602" width="108" height="34" rx="3" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.5"/>
+<text x="3020" y="616" fill="#166534" font-size="9.5" font-weight="600" text-anchor="middle">Logout</text>
+<text x="3020" y="628" fill="#16A34A" font-size="8" text-anchor="middle">logout.php</text>
+
+<!-- End Shift -> Shift Summary Report -->
+<line x1="2740" y1="636" x2="2740" y2="664" stroke="#16A34A" stroke-width="1.3" marker-end="url(#ah-g)"/>
+<rect x="2676" y="664" width="128" height="40" rx="2" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
+<path d="M2676,700 Q2740,718 2804,700" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
+<text x="2740" y="680" fill="#92400E" font-size="8.5" font-weight="600" text-anchor="middle">Shift Summary</text>
+<text x="2740" y="692" fill="#92400E" font-size="8" text-anchor="middle">Report (Print)</text>
+
+<!-- Lock Screen sub-flow -->
+<line x1="2880" y1="636" x2="2880" y2="660" stroke="#16A34A" stroke-width="1.3" marker-end="url(#ah-g)"/>
+<rect x="2822" y="660" width="116" height="32" rx="3" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.5"/>
+<text x="2880" y="673" fill="#166534" font-size="8.5" text-anchor="middle">Auto-lock after</text>
+<text x="2880" y="684" fill="#16A34A" font-size="8.5" text-anchor="middle">5 min inactivity</text>
+<line x1="2880" y1="692" x2="2880" y2="712" stroke="#16A34A" stroke-width="1.3" marker-end="url(#ah-g)"/>
+<rect x="2822" y="712" width="116" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="2880" y="725" fill="#111827" font-size="8.5" text-anchor="middle">Enter Password</text>
+<text x="2880" y="736" fill="#6B7280" font-size="8" text-anchor="middle">to Unlock</text>
+<line x1="2880" y1="744" x2="2880" y2="764" stroke="#16A34A" stroke-width="1.3" marker-end="url(#ah-g)"/>
+<rect x="2822" y="764" width="116" height="30" rx="3" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.5"/>
+<text x="2880" y="783" fill="#166534" font-size="8.5" text-anchor="middle">Resume Shift ✓</text>
+
+<!-- Logout sub-flow -->
+<line x1="3020" y1="636" x2="3020" y2="660" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="2962" y="660" width="116" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="3020" y="673" fill="#111827" font-size="8.5" text-anchor="middle">End Shift</text>
+<text x="3020" y="684" fill="#6B7280" font-size="7.5" text-anchor="middle">(optional)</text>
+<line x1="3020" y1="692" x2="3020" y2="712" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="2962" y="712" width="116" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="3020" y="725" fill="#111827" font-size="8.5" text-anchor="middle">Destroy Session</text>
+<line x1="3020" y1="744" x2="3020" y2="764" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="2962" y="764" width="116" height="32" rx="3" fill="white" stroke="#334155" stroke-width="1.5"/>
+<text x="3020" y="777" fill="#111827" font-size="8.5" text-anchor="middle">Redirect to</text>
+<text x="3020" y="788" fill="#6B7280" font-size="8" text-anchor="middle">index.php</text>
+<line x1="3020" y1="796" x2="3020" y2="816" stroke="#334155" stroke-width="1.3" marker-end="url(#ah)"/>
+<rect x="2956" y="816" width="128" height="26" rx="13" fill="#1B3A6B"/>
+<text x="3020" y="833" fill="white" font-size="9" font-weight="700" text-anchor="middle">END (Cashier Session)</text>
+
+
+<!-- ========================================
+     REAL-TIME SYNC LAYER  y=920  center x=1400
+     
+     VERIFIED from sync_check.php:
+     Changes detected via MAX(products.updated_at) and MAX(transactions.updated_at)
+     
+     Modules that trigger sync:
+     1. add_stock.php → updates products.quantity (products.updated_at changes) ✓
+     2. sell_product.php → updates products.quantity + inserts transaction ✓
+     3. edit_product.php → updates products fields (products.updated_at changes) ✓
+     4. archive_product.php → updates products.is_archived (products row changes) ✓
+     5. process_refund.php → updates transaction status + optionally restocks ✓
+     6. Cashier sell_product.php → same as #2 ✓
+     7. Cashier add_stock.php → same as #1 ✓
+     ======================================== -->
+<!-- Sync arrows from Admin modules - clean vertical-then-horizontal paths -->
+<!-- Add Stock → sync -->
+<path d="M160,824 L160,870 L750,870 L750,920" stroke="#7C3AED" stroke-width="1.3" fill="none" stroke-dasharray="5 3" marker-end="url(#ah-p)"/>
+<!-- Sell Product → sync -->
+<path d="M330,824 L330,880 L950,880 L950,920" stroke="#7C3AED" stroke-width="1.3" fill="none" stroke-dasharray="5 3" marker-end="url(#ah-p)"/>
+<!-- Edit Product → sync -->
+<path d="M570,650 L570,860 L1150,860 L1150,920" stroke="#7C3AED" stroke-width="1.3" fill="none" stroke-dasharray="5 3" marker-end="url(#ah-p)"/>
+<!-- Archive Product → sync -->
+<path d="M740,650 L740,850 L1350,850 L1350,920" stroke="#7C3AED" stroke-width="1.3" fill="none" stroke-dasharray="5 3" marker-end="url(#ah-p)"/>
+<!-- Refund → sync -->
+<path d="M1570,794 L1570,860 L1550,860 L1550,920" stroke="#7C3AED" stroke-width="1.3" fill="none" stroke-dasharray="5 3" marker-end="url(#ah-p)"/>
+<!-- Sync arrows from Cashier modules - clean paths -->
+<!-- Cashier Sell → sync -->
+<path d="M2280,838 L2280,880 L1950,880 L1950,920" stroke="#7C3AED" stroke-width="1.3" fill="none" stroke-dasharray="5 3" marker-end="url(#ah-p)"/>
+<!-- Cashier Add Stock → sync -->
+<path d="M2440,838 L2440,890 L2150,890 L2150,920" stroke="#7C3AED" stroke-width="1.3" fill="none" stroke-dasharray="5 3" marker-end="url(#ah-p)"/>
+
+<!-- Sync hub -->
+<rect x="700" y="920" width="1500" height="50" rx="10" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+<text x="1450" y="941" fill="#4C1D95" font-size="10" font-weight="700" text-anchor="middle">Real-Time Sync Engine</text>
+<text x="1450" y="955" fill="#7C3AED" font-size="8.5" text-anchor="middle">BroadcastChannel (same browser, ~0ms) + Long-Poll sync_check.php (all devices, ~100ms)</text>
+
+<!-- Sync -> decision -->
+<line x1="1450" y1="970" x2="1450" y2="994" stroke="#7C3AED" stroke-width="1.3" marker-end="url(#ah-p)"/>
+<polygon points="1450,994 1530,1024 1450,1054 1370,1024" fill="white" stroke="#7C3AED" stroke-width="1.5"/>
+<text x="1450" y="1020" fill="#4C1D95" font-size="8" text-anchor="middle" font-weight="600">Same Browser</text>
+<text x="1450" y="1032" fill="#4C1D95" font-size="8" text-anchor="middle" font-weight="600">Session?</text>
+
+<!-- YES -> BroadcastChannel -->
+<line x1="1370" y1="1024" x2="1260" y2="1024" stroke="#7C3AED" stroke-width="1.3" marker-end="url(#ah-p)"/>
+<text x="1314" y="1016" fill="#7C3AED" font-size="8" text-anchor="middle">Yes</text>
+<rect x="1150" y="1010" width="112" height="32" rx="3" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.3"/>
+<text x="1206" y="1023" fill="#4C1D95" font-size="8.5" text-anchor="middle">Broadcast</text>
+<text x="1206" y="1034" fill="#7C3AED" font-size="8" text-anchor="middle">Channel push</text>
+
+<!-- NO -> Long-poll -->
+<line x1="1530" y1="1024" x2="1640" y2="1024" stroke="#7C3AED" stroke-width="1.3" marker-end="url(#ah-p)"/>
+<text x="1587" y="1016" fill="#7C3AED" font-size="8" text-anchor="middle">No</text>
+<rect x="1638" y="1010" width="112" height="32" rx="3" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.3"/>
+<text x="1694" y="1023" fill="#4C1D95" font-size="8.5" text-anchor="middle">Long-poll</text>
+<text x="1694" y="1034" fill="#7C3AED" font-size="8" text-anchor="middle">sync_check.php</text>
+
+<!-- Both merge -> syncAllData() -->
+<path d="M1206,1042 Q1206,1080 1380,1090" stroke="#7C3AED" stroke-width="1.3" fill="none" marker-end="url(#ah-p)"/>
+<path d="M1694,1042 Q1694,1080 1520,1090" stroke="#7C3AED" stroke-width="1.3" fill="none" marker-end="url(#ah-p)"/>
+<rect x="1316" y="1090" width="268" height="32" rx="3" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.5"/>
+<text x="1450" y="1103" fill="#4C1D95" font-size="9" font-weight="600" text-anchor="middle">syncAllData() called</text>
+<text x="1450" y="1114" fill="#7C3AED" font-size="8" text-anchor="middle">All open tabs &amp; devices refresh</text>
+<line x1="1450" y1="1122" x2="1450" y2="1142" stroke="#7C3AED" stroke-width="1.3" marker-end="url(#ah-p)"/>
+
+<!-- 4 sync targets -->
+<line x1="960" y1="1142" x2="1940" y2="1142" stroke="#7C3AED" stroke-width="1.3"/>
+<line x1="960"  y1="1142" x2="960"  y2="1162" stroke="#7C3AED" stroke-width="1.3" marker-end="url(#ah-p)"/>
+<line x1="1280" y1="1142" x2="1280" y2="1162" stroke="#7C3AED" stroke-width="1.3" marker-end="url(#ah-p)"/>
+<line x1="1620" y1="1142" x2="1620" y2="1162" stroke="#7C3AED" stroke-width="1.3" marker-end="url(#ah-p)"/>
+<line x1="1940" y1="1142" x2="1940" y2="1162" stroke="#7C3AED" stroke-width="1.3" marker-end="url(#ah-p)"/>
+
+<rect x="896" y="1162" width="128" height="34" rx="3" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.3"/>
+<text x="960" y="1176" fill="#4C1D95" font-size="8.5" text-anchor="middle">Reload Product</text>
+<text x="960" y="1187" fill="#7C3AED" font-size="8" text-anchor="middle">Stock table</text>
+
+<rect x="1216" y="1162" width="128" height="34" rx="3" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.3"/>
+<text x="1280" y="1176" fill="#4C1D95" font-size="8.5" text-anchor="middle">Update Stats</text>
+<text x="1280" y="1187" fill="#7C3AED" font-size="8" text-anchor="middle">Dashboard cards</text>
+
+<rect x="1556" y="1162" width="128" height="34" rx="3" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.3"/>
+<text x="1620" y="1176" fill="#4C1D95" font-size="8.5" text-anchor="middle">Update Sales</text>
+<text x="1620" y="1187" fill="#7C3AED" font-size="8" text-anchor="middle">Dashboard stats</text>
+
+<rect x="1876" y="1162" width="128" height="34" rx="3" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.3"/>
+<text x="1940" y="1176" fill="#4C1D95" font-size="8.5" text-anchor="middle">Update Alerts</text>
+<text x="1940" y="1187" fill="#7C3AED" font-size="8" text-anchor="middle">Low-stock badges</text>
+
+<!-- All 4 sync targets merge down to END -->
+<path d="M960,1196 Q960,1230 1350,1240" stroke="#7C3AED" stroke-width="1.3" fill="none" marker-end="url(#ah-p)"/>
+<path d="M1280,1196 Q1280,1230 1400,1240" stroke="#7C3AED" stroke-width="1.3" fill="none" marker-end="url(#ah-p)"/>
+<path d="M1620,1196 Q1620,1230 1500,1240" stroke="#7C3AED" stroke-width="1.3" fill="none" marker-end="url(#ah-p)"/>
+<path d="M1940,1196 Q1940,1230 1550,1240" stroke="#7C3AED" stroke-width="1.3" fill="none" marker-end="url(#ah-p)"/>
+
+<rect x="1350" y="1240" width="200" height="32" rx="3" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.5"/>
+<text x="1450" y="1253" fill="#4C1D95" font-size="9" font-weight="600" text-anchor="middle">UI Fully Synced</text>
+<text x="1450" y="1264" fill="#7C3AED" font-size="8" text-anchor="middle">All views updated</text>
+<line x1="1450" y1="1272" x2="1450" y2="1292" stroke="#7C3AED" stroke-width="1.3" marker-end="url(#ah-p)"/>
+
+<!-- END (Sync) -->
+<rect x="1380" y="1292" width="140" height="26" rx="13" fill="#7C3AED"/>
+<text x="1450" y="1309" fill="white" font-size="9" font-weight="700" text-anchor="middle">END (Sync Complete)</text>
+
+</svg>
+</div>
+</body>
+</html>
